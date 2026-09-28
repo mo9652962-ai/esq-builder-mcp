@@ -24,6 +24,7 @@ mcp = FastMCP(
         "ESQ 1.0 题库包工具链（墨题刷题机）。推荐流程: build_esq_package → validate_package → "
         "upload_and_publish。构造时注意: packageId/paperKey/unitKey/questionKey 必须纯 ASCII "
         "[A-Za-z0-9._:-]（如 cn.gaokao.cloze.y2021.u1）; cloze 空位用双花括号 {{blank:N}}。"
+        "若不确定键是否合规, esq_build_package 传 auto_fix=true 可自动重建非法键并同步答案映射。"
         "上传/发布前需先启动刷题机后端。"
     ),
 )
@@ -35,6 +36,7 @@ def esq_build_package(
     papers: list[dict[str, Any]],
     answers: dict[str, Any],
     output_path: str,
+    auto_fix: bool = False,
 ) -> dict:
     """校验并构建 ESQ 1.0 题库包 ZIP。
 
@@ -46,23 +48,28 @@ def esq_build_package(
             - question: {questionKey, number, type:"single_choice", stem, score}
         answers: {paperKey: {questionKey: {correctOption:"B", score: 2}}} —— 每空必填, correctOption 必须存在于该题选项
         output_path: 输出 ZIP 绝对路径
+        auto_fix: true 时先自动修复机械性坑再构建——含中文的 externalKey 重建为
+            cn.xxx.y2021.u1 风格（answers 键同步改名）、单花括号 {blank:N} 转双花括号、
+            缺失 sequence 补默认值。修复明细在返回值 fixes 数组; 判断性问题（空位数≠题数、
+            答案不在选项中）仍会报错。默认 false（拒绝 + 可行动错误）。
 
     Returns:
-        {ok, zip_path, totals, errors}。ok=false 时 errors 数组给出每个错误的 path 和修复方法。
+        {ok, zip_path, totals, errors, fixes, warnings}。ok=false 时 errors 数组给出每个错误的 path 和修复方法。
     """
-    return build_esq_package(manifest, papers, answers, output_path)
+    return build_esq_package(manifest, papers, answers, output_path, auto_fix=auto_fix)
 
 
 @mcp.tool
 def esq_validate_package(zip_path: str, validator_path: str | None = None) -> dict:
-    """用刷题机官方校验器（backend/app/services/esq.py）校验 ESQ 包。
+    """校验 ESQ 包（默认内置校验器, 与刷题机官方 esq.py 同规则）。
 
     Args:
         zip_path: ESQ 包路径
-        validator_path: 可选, 校验器 CLI 路径（默认取 ESQ_VALIDATOR_PATH 环境变量或刷题机仓库默认位置）
+        validator_path: 可选, 指定后改用官方校验器 CLI（backend/tools/validate_question_bank.py）
+            subprocess 对账——默认内置实现已与其保持一致并由一致性测试守护
 
     Returns:
-        {valid, errors|totals}。valid=true + 0 errors 才可上传。
+        {valid, errors|totals, validator}。valid=true + 0 errors 才可上传。validator 字段标明用的哪条通道。
     """
     return validate_package(zip_path, validator_path)
 

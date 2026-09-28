@@ -33,6 +33,34 @@ def test_parse_wordlist_missing_file():
     assert not parse_wordlist("Z:/no/such.jsonl")["ok"]
 
 
+def test_parse_wordlist_zip_input(tmp_path):
+    """kajweb book 直接给 zip, 不必先解压（JSONL 成员逐行解析）。"""
+    import zipfile
+
+    rows = [
+        {"wordRank": 1, "headWord": "apple", "content": {"word": {"content": {"usphone": "ˈæpl", "trans": [{"pos": "n", "tranCn": "苹果"}]}}}},
+        {"wordRank": 2, "headWord": "banana", "content": {"word": {"content": {"trans": [{"pos": "n", "tranCn": "香蕉"}]}}}},
+    ]
+    path = tmp_path / "book.zip"
+    with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr("CET4.json", "\n".join(json.dumps(r, ensure_ascii=False) for r in rows))
+    result = parse_wordlist(str(path))
+    assert result["ok"]
+    assert result["count"] == 2
+    assert result["words"][0]["word"] == "apple"
+
+
+def test_parse_wordlist_zip_without_jsonl_member(tmp_path):
+    import zipfile
+
+    path = tmp_path / "empty.zip"
+    with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr("readme.txt", "nothing")
+    result = parse_wordlist(str(path))
+    assert not result["ok"]
+    assert "词表成员" in result["error"]
+
+
 def test_hot_words_year_filter_and_stopwords():
     texts = [
         {"year": 2024, "text": "The technology development improves technology efficiency quickly."},

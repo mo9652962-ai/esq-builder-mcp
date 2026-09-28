@@ -11,13 +11,17 @@ manifest.papers[].path / answerPath 由本模块自动生成（papers/<paperKey>
 
 from __future__ import annotations
 
+import copy
 import json
+import re
 import zipfile
 from pathlib import Path
 from typing import Any
 
+from .keys import ensure_external_key
 from .rules import (
     BLOCK_TYPES,
+    KEY_RE,
     MANIFEST_REQUIRED_TEXT_FIELDS,
     MAX_PACKAGE_BYTES,
     SEMVER_RE,
@@ -26,6 +30,105 @@ from .rules import (
     check_option_key,
     check_passage_blanks,
 )
+
+# 包文件必须双花括号；单花括号是库内存储格式（高频坑）。两侧非花括号才补，避免重复修复
+SINGLE_BLANK_FIX_RE = re.compile(r"(?<!\{)\{blank:(\d+)\}(?!\})")
+
+
+def apply_autofix(
+    manifest: dict[str, Any],
+    papers: list[dict[str, Any]],
+    answers: dict[str, Any],
+) -> tuple[list[dict[str, str]], list[str]]:
+    """就地修复机械性坑（判断性问题留给 validate_inputs）。返回 (fixes, warnings)。
+
+    修复项（全部在 fixes 留痕）:
+    - 含中文/非法字符的 packageId/paperKey/unitKey/questionKey → cn.xxx.y2021.u1 风格重建
+      （questionKey 重建后 answers 的键自动同步改名）
+    - 单花括号 {blank:N} → 双花括号 {{blank:N}}
+    - 缺失的 unit.sequence 补 index+1
+    """
+    fixes: list[dict[str, str]] = []
+    warnings: list[str] = []
+    subject_hint = manifest.get("subject") or "english"
+
+    original_package_id = str(manifest.get("packageId") or "")
+    new_package_id, changed = ensure_external_key(manifest.get("packageId"), ("cn", subject_hint, "pkg"))
+    if changed:
+        fixes.append({"field": "manifest.packageId", "old": original_package_id, "new": new_package_id})
+        manifest["packageId"] = new_package_id
+
+    for paper_index, paper in enumerate(papers):
+        if not isinstance(paper, dict):
+            continue
+        original_paper_key = str(paper.get("paperKey") or "")
+        new_paper_key, changed = ensure_external_key(
+            paper.get("paperKey"), ("cn", subject_hint, f"y{paper.get('year')}", f"p{paper_index + 1}")
+        )
+        if changed:
+            fixes.append({"field": f"papers[{paper_index}].paperKey", "old": original_paper_key, "new": new_paper_key})
+        paper["paperKey"] = new_paper_key
+
+        question_renames: dict[str, str] = {}
+        for unit_index, unit in enumerate(paper.get("units") or []):
+            if not isinstance(unit, dict):
+                continue
+            original_unit_key = str(unit.get("unitKey") or "")
+            new_unit_key, changed = ensure_external_key(unit.get("unitKey"), (new_paper_key, f"u{unit_index + 1}"))
+            if changed:
+                fixes.append({"field": f"papers[{paper_index}].units[{unit_index}].unitKey", "old": original_unit_key, "new": new_unit_key})
+            unit["unitKey"] = new_unit_key
+
+            if not isinstance(unit.get("sequence"), int):
+                fixes.append(
+                    {"field": f"papers[{paper_index}].units[{unit_index}].sequence", "old": str(unit.get("sequence")), "new": str(unit_index + 1)}
+                )
+                unit["sequence"] = unit_index + 1
+
+            for block_index, block in enumerate((unit.get("passage") or {}).get("blocks") or []):
+                if not isinstance(block, dict):
+                    continue
+                if isinstance(block.get("text"), str):
+                    fixed_text, count = SINGLE_BLANK_FIX_RE.subn(r"{{blank:\1}}", block["text"])
+                    if count:
+                        fixes.append(
+                            {
+                                "field": f"papers[{paper_index}].units[{unit_index}].passage.blocks[{block_index}].text",
+                                "old": "单花括号 {blank:N}",
+                                "new": f"双花括号 {{{{blank:N}}}} × {count}",
+                            }
+                        )
+                        block["text"] = fixed_text
+
+            for question_index, question in enumerate(unit.get("questions") or []):
+                if not isinstance(question, dict):
+                    continue
+                original_question_key = str(question.get("questionKey") or "")
+                new_question_key, changed = ensure_external_key(
+                    question.get("questionKey"), (new_unit_key, f"q{question.get('number', question_index + 1)}")
+                )
+                if changed:
+                    fixes.append(
+                        {"field": f"papers[{paper_index}].units[{unit_index}].questions[{question_index}].questionKey", "old": original_question_key, "new": new_question_key}
+                    )
+                    question_renames[original_question_key] = new_question_key
+                question["questionKey"] = new_question_key
+
+        # answers 键同步: paperKey 与 questionKey 两级
+        paper_answers = answers.pop(original_paper_key, None)
+        if paper_answers is None:
+            paper_answers = answers.get(new_paper_key) or {}
+        elif original_paper_key != new_paper_key:
+            answers.pop(new_paper_key, None)  # 防御: 两键并存时以原始键内容为准
+        remapped: dict[str, Any] = {}
+        for question_key, answer in (paper_answers or {}).items():
+            new_key = question_renames.get(question_key, question_key)
+            if new_key != question_key:
+                fixes.append({"field": f"answers[{new_paper_key}].{question_key}", "old": question_key, "new": new_key})
+            remapped[new_key] = answer
+        answers[new_paper_key] = remapped
+
+    return fixes, warnings
 
 
 def validate_inputs(manifest: dict[str, Any], papers: list[dict[str, Any]], answers: dict[str, Any]) -> list[dict[str, str]]:
@@ -156,14 +259,14 @@ def validate_inputs(manifest: dict[str, Any], papers: list[dict[str, Any]], answ
 
 
 def _build_paper_file(paper: dict[str, Any]) -> dict[str, Any]:
-    # 官方校验器要求每个 block 有 blockKey（3-200 位安全标识）——缺省自动补 p{index}
+    # 官方校验器要求每个 blockKey 是 3-200 位安全标识——缺失或不达标（如 2 位的 p0）都重建
     import copy as _copy
 
     paper = _copy.deepcopy(paper)
     for unit in paper["units"]:
         passage = unit.get("passage") or {}
         for index, block in enumerate(passage.get("blocks", [])):
-            if isinstance(block, dict) and not block.get("blockKey"):
+            if isinstance(block, dict) and not KEY_RE.fullmatch(str(block.get("blockKey") or "")):
                 block["blockKey"] = f"block-{index}"  # 官方规则 3-200 位, p0 这种 2 位会挂
     paper_file = {"paperKey": paper["paperKey"], "year": paper["year"], "units": paper["units"]}
     if paper.get("title"):
@@ -180,11 +283,25 @@ def build_esq_package(
     papers: list[dict[str, Any]],
     answers: dict[str, Any],
     output_path: str,
+    auto_fix: bool = False,
 ) -> dict[str, Any]:
-    """校验并打包 ESQ 1.0 ZIP。返回 {ok, zip_path, totals, errors}。"""
+    """校验并打包 ESQ 1.0 ZIP。返回 {ok, zip_path, totals, errors, fixes, warnings}。
+
+    auto_fix=True 时先就地修复机械性坑（非法 externalKey、单花括号空位、缺失 sequence，
+    答案键同步改名），修复记录在 fixes；判断性问题（空位数≠题数、答案不在选项中）
+    仍交给 validate_inputs 报错。默认 False 保持「拒绝 + 可行动错误」行为。
+    """
+    fixes: list[dict[str, str]] = []
+    warnings: list[str] = []
+    if auto_fix:
+        manifest = copy.deepcopy(manifest)
+        papers = copy.deepcopy(papers)
+        answers = copy.deepcopy(answers)
+        fixes, warnings = apply_autofix(manifest, papers, answers)
+
     errors = validate_inputs(manifest, papers, answers)
     if errors:
-        return {"ok": False, "errors": errors}
+        return {"ok": False, "errors": errors, "fixes": fixes, "warnings": warnings}
 
     out = Path(output_path)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -227,4 +344,6 @@ def build_esq_package(
         "size_ok": size <= MAX_PACKAGE_BYTES,
         "totals": totals,
         "errors": [],
+        "fixes": fixes,
+        "warnings": warnings,
     }

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+import zipfile
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -26,16 +27,35 @@ STOPWORDS = frozenset(
 )
 
 
+def _jsonl_texts(path: Path) -> list[str]:
+    """统一取文本：.jsonl/.json 直接读；kajweb book/*.zip 取其中全部 .json/.jsonl 成员。"""
+    if zipfile.is_zipfile(path):
+        with zipfile.ZipFile(path) as zf:
+            members = [
+                info for info in zf.infolist()
+                if info.filename.lower().endswith((".json", ".jsonl")) and not info.is_dir()
+            ]
+            if not members:
+                raise ValueError(f"ZIP 内没有 .json/.jsonl 词表成员: {path.name}")
+            return [zf.read(info).decode("utf-8", errors="replace") for info in members]
+    return [path.read_text(encoding="utf-8")]
+
+
 def parse_wordlist(jsonl_path: str, top_n: int | None = None, level: str | None = None) -> dict:
-    """解析 kajweb/dict JSONL 高频词表。返回 {ok, count, words: [{rank, word, phonetic, translations, synonyms}]}。"""
+    """解析 kajweb/dict 高频词表（.jsonl 或 book zip）。返回 {ok, count, words: [{rank, word, phonetic, translations, synonyms}]}。"""
     path = Path(jsonl_path)
     if not path.exists():
         return {"ok": False, "error": f"文件不存在: {path}"}
 
+    try:
+        texts = _jsonl_texts(path)
+    except (ValueError, zipfile.BadZipFile) as error:
+        return {"ok": False, "error": str(error)}
+
     words: list[dict[str, Any]] = []
     bad_lines = 0
-    with path.open("r", encoding="utf-8") as fh:
-        for line in fh:
+    for text in texts:
+        for line in text.splitlines():
             line = line.strip()
             if not line:
                 continue
