@@ -39,11 +39,20 @@ ESQ 1.0 题库包 MCP 工具链：把 [esq-question-bank-import] 技能的确定
 # PyPI（任意 MCP 客户端, 无需 clone）
 uvx esq-builder-mcp              # stdio 模式
 
+# Windows 单文件 exe: 到 Releases 下载 esq-builder-mcp.exe, 客户端 command 直指该 exe
 # 源码方式
 cd D:/esq-builder-mcp
 uv venv && uv pip install -e ".[dev]"
 uv run esq-builder-mcp
 ```
+
+## 发布新版本
+
+1. bump `pyproject.toml` 的 `version`（PyPI 不允许同版本重传）
+2. `git tag v0.1.1 && git push origin v0.1.1` → GitHub Actions 自动 build + 发布（Trusted Publishing，无 token）
+3. Windows exe: `uv run python scripts/build_exe.py`，产物 `dist/esq-builder-mcp.exe`，附到对应 Release
+
+> 一次性配置: PyPI 项目 Settings → Publishing 配 Trusted Publisher（Owner=mo9652962-ai / Repository=esq-builder-mcp / Workflow name=publish.yml / Environment=pypi）
 
 ## 注册到 MCP 客户端
 

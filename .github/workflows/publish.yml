@@ -1,0 +1,29 @@
+name: Publish to PyPI
+
+# 打 v* tag（如 v0.1.1）或手动触发 → uv build → OIDC 免 token 发布。
+# 前提（一次性）: PyPI 项目 Settings → Publishing 配 Trusted Publisher:
+#   Owner=mo9652962-ai  Repository=esq-builder-mcp  Workflow name=publish.yml  Environment=pypi
+# 同时记得 bump pyproject 的 version——PyPI 不允许同版本重传。
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write # PyPI Trusted Publishing (OIDC)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Build sdist & wheel
+        run: uv build
+
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
