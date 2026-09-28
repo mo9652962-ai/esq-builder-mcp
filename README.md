@@ -36,9 +36,13 @@ ESQ 1.0 题库包 MCP 工具链：把 [esq-question-bank-import] 技能的确定
 ## 安装与运行
 
 ```bash
+# PyPI（任意 MCP 客户端, 无需 clone）
+uvx esq-builder-mcp              # stdio 模式
+
+# 源码方式
 cd D:/esq-builder-mcp
 uv venv && uv pip install -e ".[dev]"
-uv run esq-builder-mcp          # stdio 模式
+uv run esq-builder-mcp
 ```
 
 ## 注册到 MCP 客户端
@@ -72,9 +76,9 @@ uv run pytest -v          # 35 项；含 vendored vs 官方 CLI 一致性对账�
 
 ## 后续演进
 
-- ~~**schema 包抽取**~~：已用 vendored 校验器（`esq_validator.py`）实现同目标——本包自包含、可独立分发；一致性测试代替单副本保证零漂移。若后续把 backend 的 esq.py 抽成独立 `esq-schema` PyPI 包，可直接替换 vendored 副本。
+- ~~**发布到 PyPI**~~ ✅ 已发布 [pypi.org/project/esq-builder-mcp](https://pypi.org/project/esq-builder-mcp)，`uvx esq-builder-mcp` 一行接入（实测冷启动 stdio 握手 5 工具齐全）。
 - **ESQ 1.1 examType**：manifest.papers[].examType 已在官方校验器支持，构造器暂未暴露。
-- **发布到 PyPI**：vendored 校验器落地后已无外部路径依赖，`uvx esq-builder-mcp` 一行接入可期；Windows 单文件 exe 走 PyInstaller。
+- **Windows 单文件 exe**：走 PyInstaller（复用刷题机发布经验）。
 
 ## 与技能的关系
 
