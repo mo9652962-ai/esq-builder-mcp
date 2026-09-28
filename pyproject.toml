@@ -4,12 +4,25 @@ build-backend = "hatchling.build"
 
 [project]
 name = "esq-builder-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "ESQ 题库包构建/校验/导入/词表分析 MCP server（墨题刷题机 ESQ 1.0 管道工具化）"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "sora" }]
+keywords = ["esq", "question-bank", "mcp", "fastmcp", "agent", "rag", "english-exam", "cloze"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Operating System :: OS Independent",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education :: Testing",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "fastmcp>=2.0",
     "httpx>=0.27",
