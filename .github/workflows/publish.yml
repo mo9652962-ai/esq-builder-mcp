@@ -12,7 +12,23 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --extra dev
+
+      - name: Run tests before publish
+        run: uv run pytest -q
+
   publish:
+    needs: test
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
