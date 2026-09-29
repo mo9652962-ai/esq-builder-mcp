@@ -179,7 +179,6 @@ def validate_inputs(manifest: dict[str, Any], papers: list[dict[str, Any]], answ
         paper_answers = answers.get(paper_key, {})
         seen_question_keys: set[str] = set()
         for unit_index, unit in enumerate(paper.get("units", [])):
-            unit_key = unit.get("unitKey", "?")
             unit_label = f"papers.{paper_key}.units[{unit_index}]"
             check_key(unit.get("unitKey"), f"{unit_label}.unitKey", errors)
             if unit.get("type") not in UNIT_TYPES:

@@ -11,8 +11,9 @@ try:
 except ImportError:  # pragma: no cover
     pytest.skip("fastmcp 未安装", allow_module_level=True)
 
-from esq_builder_mcp.validator import DEFAULT_VALIDATOR
 from pathlib import Path
+
+from esq_builder_mcp.validator import DEFAULT_VALIDATOR
 
 
 async def test_list_tools():

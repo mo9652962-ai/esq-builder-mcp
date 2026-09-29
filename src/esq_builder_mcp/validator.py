@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
+import subprocess  # nosec B404 —— 工具本体需调用官方校验器命令行，全项目唯一系统调用点
 import sys
 from pathlib import Path
 from typing import Any
@@ -33,7 +33,7 @@ def _validate_via_subprocess(zip_path: str, validator: Path, python_path: str | 
                 }
             ],
         }
-    proc = subprocess.run(
+    proc = subprocess.run(  # noqa: PLW1510  # nosec B603 —— 参数全为自构造（解释器、校验器与包路径），输出捕获后由调用方解析为结构化结果
         [python_path or sys.executable, str(validator), str(zip_path)],
         capture_output=True,
         text=True,

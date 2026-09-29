@@ -88,5 +88,5 @@ def _extract_error(response: httpx.Response) -> str:
         if isinstance(detail, dict):
             return str(detail.get("message") or detail)
         return str(detail)
-    except Exception:
+    except Exception:  # noqa: BLE001 —— 错误响应体结构不可信，任何解析失败统一回退原文截断
         return response.text[:500]

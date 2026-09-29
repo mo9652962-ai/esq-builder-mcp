@@ -181,7 +181,7 @@ def _read_json(archive: zipfile.ZipFile, name: str) -> dict[str, Any]:
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
         raise ValueError(f"JSON 文件无效：{name}") from error
     if not isinstance(payload, dict):
-        raise ValueError(f"JSON 根节点必须是对象：{name}")
+        raise ValueError(f"JSON 根节点必须是对象：{name}")  # noqa: TRY004 —— 校验的是反序列化后的文档内容而非入参类型，保持数据错误语义
     return payload
 
 

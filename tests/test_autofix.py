@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import copy
 
+from conftest import CLOZE_UNIT, MANIFEST, READING_UNIT
+
 from esq_builder_mcp.builder import build_esq_package
 from esq_builder_mcp.esq_validator import load_esq_package
-
-from conftest import MANIFEST, CLOZE_UNIT, READING_UNIT
 
 
 def _dirty_papers() -> list[dict]:
