@@ -2,6 +2,13 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.2] - 2026-09-29
+
+### Added
+
+- CI：Actions SHA 全固定、覆盖率棘轮 65、pip-audit 依赖扫描、CycloneDX SBOM + PEP 740 provenance
+- 治理：CHANGELOG / CONTRIBUTING / issue-PR 模板 / CODEOWNERS
+
 ## [Unreleased]
 
 ## [0.1.1] - 2026-09-28
