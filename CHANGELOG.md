@@ -11,6 +11,17 @@
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-09-30
+
+### Added
+
+- CI：ruff + bandit lint job（dev extras + [tool.ruff] 配置，uv.lock 锁定 lint 工具版本）
+- 测试：35 → 111 例，覆盖率 69% → 99%（esq_validator 分支变异电池 / builder 校验与 autofix 缺口 / server 工具体 / client MockTransport 往返），覆盖率棘轮 65 → 97
+
+### Fixed
+
+- 清理误跟踪的 .coverage 产物（进 .gitignore）
+
 ## [0.1.1] - 2026-09-28
 
 ### Changed
