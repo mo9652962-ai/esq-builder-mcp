@@ -42,7 +42,7 @@ jobs:
         run: uv build
 
       - name: Generate SBOM (CycloneDX)
-        run: uv run --with cyclonedx-py cyclonedx-py pyproject --output-format json --output-file sbom.json
+        run: uv run --with cyclonedx-py cyclonedx-py environment --output-format json --output-file sbom.json
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3（SHA 固定）
