@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# least-privilege：GITHUB_TOKEN 全局只读，个别 job 需要更多权限时在该 job 单独声明
+permissions:
+  contents: read
+
 jobs:
   test:
     strategy:
