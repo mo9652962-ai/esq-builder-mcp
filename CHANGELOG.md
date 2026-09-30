@@ -11,6 +11,14 @@
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-09-30
+
+### Added
+
+- MCP Registry 元数据：server.json（io.github 命名 + pypi 包引用 + stdio transport）与
+  `registry-publish.yml`（GitHub OIDC 免 token，等 PyPI 上线后自动登记）
+- README 加 `mcp-name` 所有权标记（registry 校验读 PyPI 描述）
+
 ## [0.1.3] - 2026-09-30
 
 ### Added

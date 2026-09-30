@@ -1,5 +1,7 @@
 # esq-builder-mcp
 
+<!-- mcp-name: io.github.mo9652962-ai/esq-builder-mcp -->
+
 ESQ 1.0 题库包 MCP 工具链：把 [esq-question-bank-import] 技能的确定性环节（构建/校验/上传/词表分析）固化为 MCP 工具，供任意 MCP 客户端（ZCode / Claude Desktop / Codex 等）调用。
 
 ## 为什么
