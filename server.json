@@ -1,0 +1,17 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.mo9652962-ai/esq-builder-mcp",
+  "title": "ESQ Builder",
+  "description": "ESQ 1.0 题库包工具链（墨题刷题机）：build(auto_fix) → validate(双轨校验) → upload/publish + kajweb 词表解析与热点词统计",
+  "version": "0.1.4",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "esq-builder-mcp",
+      "version": "0.1.4",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
