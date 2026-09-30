@@ -33,6 +33,63 @@ ESQ 1.0 题库包 MCP 工具链：把 [esq-question-bank-import] 技能的确定
 
 两条通道的一致性由 `tests/test_validator_conformance.py` 守护（本机有刷题机仓库时自动执行；后端校验逻辑变更后先跑它再同步 vendored 副本）。
 
+## 工具参数参考
+
+以下参数表与 `src/esq_builder_mcp/server.py` 的实际签名逐一对应。
+
+### esq_build_package
+
+| 参数 | 类型 | 必填 | 默认 | 说明 |
+|:---|:---|:---:|:---|:---|
+| `manifest` | object | 是 | — | `{packageId, contentVersion, title, subject, publisher, license:{notice}, source:{description}}` |
+| `papers` | array | 是 | — | `[{paperKey, year, units:[{unitKey, type(cloze\|reading\|part_b), title, sequence, passage?, candidates?, questions:[...]}]}]`；cloze 用 `{{blank:N}}` 双花括号标空位、词库题写 `unit.candidates`；reading 的 questions 写 `options` |
+| `answers` | object | 是 | — | `{paperKey: {questionKey: {correctOption, score}}}` —— 每空必填，`correctOption` 必须存在于该题选项 |
+| `output_path` | string | 是 | — | 输出 ZIP 绝对路径 |
+| `auto_fix` | boolean | 否 | `false` | 见上节；修复明细在返回值 `fixes` 数组 |
+
+返回 `{ok, zip_path, totals, errors, fixes, warnings}`。
+
+### esq_validate_package
+
+| 参数 | 类型 | 必填 | 默认 | 说明 |
+|:---|:---|:---:|:---|:---|
+| `zip_path` | string | 是 | — | ESQ 包路径 |
+| `validator_path` | string | 否 | （内置校验器） | 指定后改走官方校验器 CLI subprocess 对账；也可用环境变量 `ESQ_VALIDATOR_PATH` |
+
+返回 `{valid, errors|totals, validator}`；`valid=true` 且 0 errors 才可上传。
+
+### esq_upload_and_publish
+
+| 参数 | 类型 | 必填 | 默认 | 说明 |
+|:---|:---|:---:|:---|:---|
+| `zip_path` | string | 是 | — | ESQ 包路径（上传前先 `esq_validate_package`） |
+| `base_url` | string | 否 | `http://127.0.0.1:8765` | 刷题机后端地址（需先启动后端） |
+| `profile_id` | integer | 否 | （后端当前激活级别） | 题库 profile |
+| `publish` | boolean | 否 | `true` | 是否发布；publish 失败时上传已成功，用返回的 `job_id` 单独重试 |
+
+返回 `{ok, job_id, uploaded, published}`。
+
+### esq_parse_wordlist
+
+| 参数 | 类型 | 必填 | 默认 | 说明 |
+|:---|:---|:---:|:---|:---|
+| `jsonl_path` | string | 是 | — | kajweb/dict 高频词表 JSONL 或 book zip 路径 |
+| `top_n` | integer | 否 | （全部） | 只取前 N 个（如四级核心词取 1162） |
+| `level` | string | 否 | （不标注） | 级别名（如「四级·高频」） |
+
+返回 `{ok, count, bad_lines, words:[{rank, word, phonetic, translations, synonyms}]}`。
+
+### esq_hot_words
+
+| 参数 | 类型 | 必填 | 默认 | 说明 |
+|:---|:---|:---:|:---|:---|
+| `texts` | array | 是 | — | `[{year: 2024, text: "passage 正文"}, ...]`（或纯字符串列表） |
+| `since_year` | integer | 否 | `2023` | 只统计该年份之后的真题（默认近两年热点） |
+| `top_n` | integer | 否 | `300` | 取前 N 个 |
+| `extra_stopwords` | array | 否 | （无） | 额外停用词 |
+
+返回 `{ok, texts_scanned, unique_words, hot_words:[{term, count}]}`。
+
 ## 安装与运行
 
 ```bash
@@ -80,14 +137,15 @@ ZCode（`~/.zcode/cli/config.json` → mcpServers）或其他客户端：
 ## 测试
 
 ```bash
-uv run pytest -v          # 35 项；含 vendored vs 官方 CLI 一致性对账（无刷题机环境自动 skip）
+uv run pytest -v          # 111 项；含 vendored vs 官方 CLI 一致性对账（无刷题机环境自动 skip）
+uv run ruff check src tests && uv run bandit -r src -q --skip B101   # lint 与安全静态扫描（CI 同款）
 ```
 
 ## 后续演进
 
 - ~~**发布到 PyPI**~~ ✅ 已发布 [pypi.org/project/esq-builder-mcp](https://pypi.org/project/esq-builder-mcp)，`uvx esq-builder-mcp` 一行接入（实测冷启动 stdio 握手 5 工具齐全）。
+- ~~**Windows 单文件 exe**~~ ✅ 走 PyInstaller（复用刷题机发布经验），随 GitHub Release 分发。
 - **ESQ 1.1 examType**：manifest.papers[].examType 已在官方校验器支持，构造器暂未暴露。
-- **Windows 单文件 exe**：走 PyInstaller（复用刷题机发布经验）。
 
 ## 与技能的关系
 
@@ -97,3 +155,4 @@ uv run pytest -v          # 35 项；含 vendored vs 官方 CLI 一致性对账�
 ## 演进记录
 
 - 2026-09-28：校验改双轨（vendored 默认 + 官方 CLI 对账），解除对刷题机仓库路径的运行时依赖，PyPI 分发解锁；`esq_build_package` 增加 `auto_fix` 通道；`esq_parse_wordlist` 支持 book zip 输入。
+- 2026-09-30：测试 35 → 111 例（覆盖率 69% → 99%，棘轮 97），CI 加 ruff+bandit lint job，发布 v0.1.3；README 补工具参数参考。
