@@ -189,3 +189,7 @@ uv run ruff check src tests && uv run bandit -r src -q --skip B101   # lint 与�
 ## License
 
 MIT
+
+---
+
+📌 **更多**：[作者仓库矩阵](https://github.com/mo9652962-ai)（墨题刷题机 / 第二大脑 / 安全三部曲 / 孵化线）
