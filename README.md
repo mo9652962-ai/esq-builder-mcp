@@ -1,8 +1,60 @@
-# esq-builder-mcp
+<div align="center">
+
+  <img src="docs/images/brand-mark.png" alt="ESQ Builder MCP" width="110">
+
+  # ESQ BUILDER MCP
+
+  **题库包自由 · 双轨校验 · auto_fix 修复留痕 · uvx 一行接入**
+
+  **esq-builder-mcp 把 ESQ 1.0 题库包工具链固化为 5 个 MCP 工具：构建（自动修复机械性坑）→ 校验（内置 vendored + 官方 CLI 双轨）→ 上传发布（503 重试），外加 kajweb 词表解析与真题热点词统计。已上架 [MCP Registry](https://registry.modelcontextprotocol.io)。**
+
+  <p>
+    <a href="README.en.md">English</a>
+    ·
+    <a href="#-工具参数参考">📐 参数参考</a>
+    ·
+    <a href="CHANGELOG.md">CHANGELOG</a>
+    ·
+    <a href="https://registry.modelcontextprotocol.io">MCP Registry</a>
+    ·
+    <a href="LICENSE">MIT</a>
+  </p>
+
+  <p>
+    <a href="https://github.com/mo9652962-ai/esq-builder-mcp/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/mo9652962-ai/esq-builder-mcp/ci.yml?style=flat-square&label=CI" alt="CI"></a>
+    <a href="https://github.com/mo9652962-ai/esq-builder-mcp/actions/workflows/codeql.yml"><img src="https://img.shields.io/github/actions/workflow/status/mo9652962-ai/esq-builder-mcp/codeql.yml?style=flat-square&label=CodeQL" alt="CodeQL"></a>
+    <a href="https://pypi.org/project/esq-builder-mcp/"><img src="https://img.shields.io/pypi/v/esq-builder-mcp?style=flat-square&color=2563EB" alt="PyPI"></a>
+    <img src="https://img.shields.io/pypi/dm/esq-builder-mcp?style=flat-square&label=downloads" alt="downloads">
+    <img src="https://img.shields.io/pypi/pyversions/esq-builder-mcp?style=flat-square" alt="python">
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/mo9652962-ai/esq-builder-mcp?style=flat-square" alt="MIT"></a>
+    <img src="https://img.shields.io/badge/MCP_Registry-listed-00ff9d?style=flat-square" alt="MCP Registry">
+    <img src="https://img.shields.io/badge/coverage-99%25-success?style=flat-square" alt="coverage">
+  </p>
+</div>
+
+<div align="center">
+  <img src="docs/images/banner-1200x630.png" alt="ESQ BUILDER MCP · 题库包 MCP 工具链" width="100%">
+</div>
+
+<div align="center">
+  <img src="docs/images/demo.gif" alt="esq-builder-mcp 5 工具演示：build / validate / upload / 词表分析" width="92%">
+  <p><sub>▲ 5 个 MCP 工具 · PyPI 5 个版本 · <a href="https://pypi.org/project/esq-builder-mcp/">PyPI</a> / <a href="https://registry.modelcontextprotocol.io">MCP Registry</a> 双上架</sub></p>
+</div>
+
+<div align="center">
+
+### ⭐ 如果 esq-builder-mcp 对你有帮助，点个 Star 就是最大的支持
+
+[![GitHub stars](https://img.shields.io/github/stars/mo9652962-ai/esq-builder-mcp?style=social)](https://github.com/mo9652962-ai/esq-builder-mcp/stargazers)
+[![GitHub License](https://img.shields.io/github/license/mo9652962-ai/esq-builder-mcp?style=flat-square)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/mo9652962-ai/esq-builder-mcp/ci.yml?style=flat-square)](https://github.com/mo9652962-ai/esq-builder-mcp/actions)
+[![GitHub Release](https://img.shields.io/github/v/release/mo9652962-ai/esq-builder-mcp?style=flat-square)](https://github.com/mo9652962-ai/esq-builder-mcp/releases)
+
+[![Star History Chart](https://api.star-history.com/svg?repos=mo9652962-ai/esq-builder-mcp&type=Date)](https://star-history.com/#mo9652962-ai/esq-builder-mcp&Date)
+
+</div>
 
 <!-- mcp-name: io.github.mo9652962-ai/esq-builder-mcp -->
-
-ESQ 1.0 题库包 MCP 工具链：把 [esq-question-bank-import] 技能的确定性环节（构建/校验/上传/词表分析）固化为 MCP 工具，供任意 MCP 客户端（ZCode / Claude Desktop / Codex 等）调用。
 
 ## 为什么
 
@@ -35,7 +87,31 @@ ESQ 1.0 题库包 MCP 工具链：把 [esq-question-bank-import] 技能的确定
 
 两条通道的一致性由 `tests/test_validator_conformance.py` 守护（本机有刷题机仓库时自动执行；后端校验逻辑变更后先跑它再同步 vendored 副本）。
 
-## 工具参数参考
+## 🚀 快速开始
+
+```bash
+# PyPI（任意 MCP 客户端，无需 clone）
+uvx esq-builder-mcp              # stdio 模式
+
+# Windows 单文件 exe：到 Releases 下载 esq-builder-mcp.exe，客户端 command 直指该 exe
+```
+
+ZCode（`~/.zcode/cli/config.json` → mcpServers）或其他客户端：
+
+```json
+{
+  "mcpServers": {
+    "esq-builder": {
+      "command": "uvx",
+      "args": ["esq-builder-mcp"]
+    }
+  }
+}
+```
+
+> Windows 下 MCP 命令参数一律用正斜杠路径（Codex config.toml 转义坑的同款规避）。
+
+## 📐 工具参数参考
 
 以下参数表与 `src/esq_builder_mcp/server.py` 的实际签名逐一对应。
 
@@ -92,69 +168,24 @@ ESQ 1.0 题库包 MCP 工具链：把 [esq-question-bank-import] 技能的确定
 
 返回 `{ok, texts_scanned, unique_words, hot_words:[{term, count}]}`。
 
-## 安装与运行
-
-```bash
-# PyPI（任意 MCP 客户端, 无需 clone）
-uvx esq-builder-mcp              # stdio 模式
-
-# Windows 单文件 exe: 到 Releases 下载 esq-builder-mcp.exe, 客户端 command 直指该 exe
-# 源码方式
-cd D:/esq-builder-mcp
-uv venv && uv pip install -e ".[dev]"
-uv run esq-builder-mcp
-```
-
-## 发布新版本
-
-1. bump `pyproject.toml` 的 `version`（PyPI 不允许同版本重传）
-2. `git tag v0.1.1 && git push origin v0.1.1` → GitHub Actions 自动 build + 发布（Trusted Publishing，无 token）
-3. Windows exe: `uv run python scripts/build_exe.py`，产物 `dist/esq-builder-mcp.exe`，附到对应 Release
-
-> 一次性配置: PyPI 项目 Settings → Publishing 配 Trusted Publisher（Owner=mo9652962-ai / Repository=esq-builder-mcp / Workflow name=publish.yml / Environment=pypi）
-
-## 注册到 MCP 客户端
-
-ZCode（`~/.zcode/cli/config.json` → mcpServers）或其他客户端：
-
-```json
-{
-  "mcpServers": {
-    "esq-builder": {
-      "command": "uv",
-      "args": ["--directory", "D:/esq-builder-mcp", "run", "esq-builder-mcp"]
-    }
-  }
-}
-```
-
-> Windows 下 MCP 命令参数一律用正斜杠路径（Codex config.toml 转义坑的同款规避）。
-
-## 环境变量
-
-| 变量 | 默认 | 说明 |
-|:---|:---|:---|
-| `ESQ_VALIDATOR_PATH` | （未设） | 设定后 `esq_validate_package` 改走官方校验器 CLI（对账/仲裁通道）；默认内置校验器，不需要此变量 |
-
-## 测试
+## 🧪 测试
 
 ```bash
 uv run pytest -v          # 111 项；含 vendored vs 官方 CLI 一致性对账（无刷题机环境自动 skip）
 uv run ruff check src tests && uv run bandit -r src -q --skip B101   # lint 与安全静态扫描（CI 同款）
 ```
 
-## 后续演进
+## 🌍 环境变量
 
-- ~~**发布到 PyPI**~~ ✅ 已发布 [pypi.org/project/esq-builder-mcp](https://pypi.org/project/esq-builder-mcp)，`uvx esq-builder-mcp` 一行接入（实测冷启动 stdio 握手 5 工具齐全）。
-- ~~**Windows 单文件 exe**~~ ✅ 走 PyInstaller（复用刷题机发布经验），随 GitHub Release 分发。
-- **ESQ 1.1 examType**：manifest.papers[].examType 已在官方校验器支持，构造器暂未暴露。
+| 变量 | 默认 | 说明 |
+|:---|:---|:---|
+| `ESQ_VALIDATOR_PATH` | （未设） | 设定后 `esq_validate_package` 改走官方校验器 CLI（对账/仲裁通道） |
 
-## 与技能的关系
+## 🔁 与技能的关系
 
 - 上游技能：`~/.agents/skills/esq-question-bank-import/SKILL.md`（流程与数据源）
-- 本 server 是其「确定性环节」的工具化；AI 标注答案（基元律动）等 LLM 判断环节仍在技能侧。
+- 本 server 是其「确定性环节」的工具化；AI 标注答案等 LLM 判断环节仍在技能侧。
 
-## 演进记录
+## License
 
-- 2026-09-28：校验改双轨（vendored 默认 + 官方 CLI 对账），解除对刷题机仓库路径的运行时依赖，PyPI 分发解锁；`esq_build_package` 增加 `auto_fix` 通道；`esq_parse_wordlist` 支持 book zip 输入。
-- 2026-09-30：测试 35 → 111 例（覆盖率 69% → 99%，棘轮 97），CI 加 ruff+bandit lint job，发布 v0.1.3；README 补工具参数参考。
+MIT
