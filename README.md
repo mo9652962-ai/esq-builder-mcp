@@ -186,9 +186,11 @@ uv run ruff check src tests && uv run bandit -r src -q --skip B101   # lint 与�
 - 上游技能：`~/.agents/skills/esq-question-bank-import/SKILL.md`（流程与数据源）
 - 本 server 是其「确定性环节」的工具化；AI 标注答案等 LLM 判断环节仍在技能侧。
 
-## License
+## 📄 许可证、安全与隐私 (License, Security & Privacy)
 
-MIT
+- **许可证**：[MIT License](LICENSE)
+- **安全政策**：[SECURITY.md](SECURITY.md)
+- **隐私保护**：[PRIVACY.md](PRIVACY.md)（零遥测、100% 本地运算）
 
 ---
 
